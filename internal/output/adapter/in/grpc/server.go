@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	"jiaa-server-core/internal/output/domain"
 	portin "jiaa-server-core/internal/output/port/in"
@@ -39,7 +40,10 @@ func (s *SabotageServer) Start() error {
 	s.server = grpc.NewServer()
 	proto.RegisterSabotageCommandServiceServer(s.server, s)
 
-	log.Printf("[SABOTAGE_SERVER] Starting gRPC server on port %s", s.port)
+	// Enable gRPC Reflection for tools like Postman, grpcurl, etc.
+	reflection.Register(s.server)
+
+	log.Printf("[SABOTAGE_SERVER] Starting gRPC server on port %s (reflection enabled)", s.port)
 
 	go func() {
 		if err := s.server.Serve(lis); err != nil {
