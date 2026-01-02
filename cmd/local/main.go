@@ -42,9 +42,10 @@ type Config struct {
 	// Output Service
 	OutputGRPCPort string
 
-	// External Services (Dev 1, Dev 3)
+	// External Services (Dev 1, Dev 3, Dev 5)
 	PhysicalControlAddr string
 	ScreenControlAddr   string
+	IntelligenceAddr    string // Dev 5 (Intelligence Worker)
 }
 
 func main() {
@@ -89,16 +90,21 @@ func main() {
 		log.Printf("[LOCAL] Warning: Kafka producer not available: %v", err)
 	}
 
-	// gRPC Clients (→ Output Service, Dev 1, Dev 3)
+	// gRPC Clients (→ Output Service, Dev 1, Dev 3, Dev 5)
 	sabotageCommandAddr := "localhost:" + config.OutputGRPCPort // 같은 프로세스의 Output Service
 	sabotageAdapter := inputGrpcOut.NewSabotageCommandAdapterLazy(sabotageCommandAddr)
 	physicalAdapter := inputGrpcOut.NewPhysicalControlAdapterLazy(config.PhysicalControlAddr)
 	screenAdapter := inputGrpcOut.NewScreenControlAdapterLazy(config.ScreenControlAddr)
+	intelligenceAdapter := inputGrpcOut.NewIntelligenceAdapterLazy(config.IntelligenceAddr)
 
 	// Input - Services
 	reflexService := inputService.NewReflexService(blacklistAdapter, sabotageAdapter, dataRelayAdapter)
 	commandRouterService := inputService.NewCommandRouterService(physicalAdapter, screenAdapter)
 	solutionRouterService := inputService.NewSolutionRouterService(screenAdapter)
+
+	// Intelligence Adapter 로깅 (Dev 5 연결 확인)
+	log.Printf("[LOCAL] Intelligence Worker (Dev 5) address: %s", config.IntelligenceAddr)
+	_ = intelligenceAdapter // TODO: Emergency 프로토콜에서 사용 예정
 
 	// Input - Driving Adapters
 	activityHandler := httpAdapter.NewActivityHandler(reflexService)
@@ -209,6 +215,7 @@ func loadConfig() Config {
 		OutputGRPCPort:      getEnv("OUTPUT_GRPC_PORT", "50053"),
 		PhysicalControlAddr: getEnv("PHYSICAL_CONTROL_ADDR", "localhost:50051"),
 		ScreenControlAddr:   getEnv("SCREEN_CONTROL_ADDR", "localhost:50052"),
+		IntelligenceAddr:    getEnv("INTELLIGENCE_ADDR", "localhost:50051"), // Dev 5
 	}
 }
 
