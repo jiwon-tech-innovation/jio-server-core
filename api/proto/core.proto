@@ -12,6 +12,12 @@ service CoreService {
 
   // 2. AI 분석 결과 보고 (윤성 -> 승민)
   rpc ReportAnalysisResult(AnalysisReport) returns (Ack);
+
+  // 3. 실행 중인 앱 목록 전송 (변경 시에만)
+  rpc SendAppList(AppListRequest) returns (AppListResponse);
+
+  // 4. 음성 스트리밍 -> STT 변환
+  rpc TranscribeAudio(stream AudioRequest) returns (AudioResponse);
 }
 
 // --- 클라이언트 -> 서버 (1초마다 전송) ---
@@ -27,6 +33,10 @@ message ClientHeartbeat {
   // 비전 데이터 (Dev 2용)
   bool is_eyes_closed = 6;    // 눈 감음 여부
   float concentration_score = 7; // 비전 모델이 판단한 집중도
+  float keyboard_entropy = 8;    // 키보드 엔트로피 (0.0 ~ 5.0)
+  string active_window_title = 9; // 활성 창 제목
+  bool is_dragging = 10;          // 마우스 드래그 여부
+  double avg_dwell_time = 11;     // 평균 키 누름 시간 (ms)
 }
 
 // --- 서버 -> 클라이언트 (명령) ---
@@ -50,4 +60,36 @@ message AnalysisReport {
 
 message Ack {
   bool success = 1;
+}
+
+// ==================== App List ====================
+
+message AppListRequest {
+  string apps_json = 1;       // 실행 중인 앱 목록 JSON (["Chrome", "VS Code", ...])
+  int64 timestamp = 2;        // 전송 시간
+}
+
+message AppListResponse {
+  bool success = 1;           // 수신 성공 여부
+  string message = 2;         // 응답 메시지
+  string command = 3;         // 명령 (e.g. "KILL")
+  string target_app = 4;      // 대상 앱 (e.g. "Minecraft")
+}
+
+// ==================== Audio ====================
+
+message AudioRequest {
+  bytes audio_data = 1;       // VAD로 걸러진 음성 바이너리
+  bool is_final = 2;          // True = "문장 끝났음(침묵 1초 감지)"
+  int64 timestamp = 3;        // 로깅용 시간
+  string media_info_json = 4; // 미디어 정보 JSON
+  
+  string process_info = 10;   // (추가) 현재 활성 프로세스 정보 (JSON)
+  string windows = 11;        // (추가) 열린 창 목록 정보 (JSON)
+}
+
+message AudioResponse {
+  string transcript = 1;      // 변환된 텍스트
+  bool is_emergency = 2;      // 위급 상황 여부
+  string intent = 3;          // 의도 분석 결과
 }

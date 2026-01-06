@@ -131,8 +131,12 @@ func main() {
 		}
 	}()
 
+	// ScoreService - 점수 산정 (Algorithmic Logic)
+	scoreService := service.NewScoreService()
+	log.Printf("[MAIN] ScoreService initialized")
+
 	// gRPC Server (Vision Service Input) on Port 50052
-	inputGrpcServer := grpcIn.NewInputGrpcServer("50052", reflexService)
+	inputGrpcServer := grpcIn.NewInputGrpcServer("50052", reflexService, scoreService)
 	if err := inputGrpcServer.Start(); err != nil {
 		log.Printf("[MAIN] Failed to start Input gRPC server: %v", err)
 	}
