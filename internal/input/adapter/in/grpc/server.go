@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	portin "jiaa-server-core/internal/input/port/in"
+	"jiaa-server-core/internal/input/service"
 	"jiaa-server-core/pkg/proto"
 )
 
@@ -20,10 +21,10 @@ type InputGrpcServer struct {
 }
 
 // NewInputGrpcServer creates a new gRPC server wrapper
-func NewInputGrpcServer(port string, reflexService portin.ReflexUseCase) *InputGrpcServer {
+func NewInputGrpcServer(port string, reflexService portin.ReflexUseCase, scoreService *service.ScoreService) *InputGrpcServer {
 	return &InputGrpcServer{
 		port:        port,
-		coreService: NewCoreServiceServer(reflexService),
+		coreService: NewCoreServiceServer(reflexService, scoreService),
 		reflexService: reflexService,
 	}
 }

@@ -12,7 +12,18 @@ COPY go.mod go.sum ./
 # Copy Source
 COPY . .
 
-# Tidy dependencies (to resolve go.mod updates)
+# Install Protoc & Plugins (FIRST)
+RUN apk add --no-cache protobuf
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+ENV PATH="$PATH:$(go env GOPATH)/bin"
+
+# Generate Protobufs (Force update)
+# Use module=jiaa-server-core to strip the module prefix from the output path, so it matches the expected package text
+RUN protoc -I=. --go_out=. --go_opt=module=jiaa-server-core --go-grpc_out=. --go-grpc_opt=module=jiaa-server-core api/proto/core.proto
+RUN ls -R pkg/proto/
+
+# Tidy dependencies
 RUN go mod tidy -e && go mod vendor
 
 # Build Argument to select service (default: input-service)
