@@ -167,7 +167,7 @@ func main() {
 func loadConfig() Config {
 	return Config{
 		HTTPPort:            getEnv("HTTP_PORT", "8080"),
-		KafkaBrokers:        getEnv("KAFKA_BROKERS", "localhost:9092"),
+		KafkaBrokers:        getEnv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
 		ActivityTopic:       getEnv("ACTIVITY_TOPIC", "client-activity"),
 		StateTopic:          getEnv("STATE_TOPIC", "command-state"),
 		PhysicalControlAddr: getEnv("PHYSICAL_CONTROL_ADDR", "localhost:50051"),
