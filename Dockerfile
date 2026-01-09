@@ -27,8 +27,9 @@ RUN ls -R pkg/proto/
 RUN go mod tidy -e && go mod vendor
 
 # Build Argument to select service (default: input-service)
-ARG SERVICE_NAME=input-service
-RUN go build -tags dynamic -o /server cmd/${SERVICE_NAME}/main.go
+# Now building BOTH services for a unified image
+RUN go build -tags dynamic -o /server-input cmd/input-service/main.go
+RUN go build -tags dynamic -o /server-output cmd/output-service/main.go
 
 # Runtime Stage
 FROM alpine:latest
@@ -36,11 +37,16 @@ FROM alpine:latest
 # Install runtime dependencies
 RUN apk add --no-cache librdkafka
 
-WORKDIR /root/
-COPY --from=builder /server .
+WORKDIR /app
+# Copy both binaries
+COPY --from=builder /server-input ./input-service
+COPY --from=builder /server-output ./output-service
 
-# Expose HTTP Port
+# Expose ports for both services
+# Input Service: HTTP 8080, gRPC 50052
 EXPOSE 8080
 EXPOSE 50052
+# Output Service: (Assumed port, verify code if needed, but exposing doesn't hurt)
 
-CMD ["./server"]
+# Default command (can be overridden in k8s)
+CMD ["./input-service"]

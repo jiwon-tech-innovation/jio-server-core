@@ -1,0 +1,16 @@
+# Version Control
+.git
+.gitignore
+
+# Build Artifacts
+server
+server-input
+server-output
+*.exe
+*.dll
+*.so
+*.dylib
+
+# IDE
+.idea
+.vscode
