@@ -147,6 +147,33 @@ func (a *IntelligenceAdapter) RequestURLClassification(clientID string, url stri
 	return classification, nil
 }
 
+// SendAppList 앱 목록 전송 및 AI 판정 결과 수신
+func (a *IntelligenceAdapter) SendAppList(appsJSON string) (string, string, string, error) {
+	if a.conn == nil {
+		if err := a.Connect(); err != nil {
+			log.Printf("[INTELLIGENCE] Failed to connect: %v", err)
+			return "", "", "", err
+		}
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req := &proto.AppListRequest{
+		AppsJson:  appsJSON,
+		Timestamp: time.Now().UnixMilli(),
+	}
+
+	// log.Printf("[INTELLIGENCE] Sending App List to AI Service...")
+	resp, err := a.client.SendAppList(ctx, req)
+	if err != nil {
+		log.Printf("[INTELLIGENCE] gRPC SendAppList failed: %v", err)
+		return "", "", "", err
+	}
+
+	return resp.Message, resp.Command, resp.TargetApp, nil
+}
+
 // Close 연결 종료
 func (a *IntelligenceAdapter) Close() error {
 	if a.conn != nil {
