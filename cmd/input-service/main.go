@@ -32,6 +32,7 @@ type Config struct {
 	PhysicalControlAddr string // Dev 1 gRPC 주소
 	ScreenControlAddr   string // Dev 3 gRPC 주소
 	SabotageCommandAddr string // SabotageCommand gRPC 주소
+	IntelligenceAddr    string // Dev 5 (AI) gRPC 주소
 }
 
 func main() {
@@ -56,6 +57,7 @@ func main() {
 	sabotageAdapter := grpcOut.NewSabotageCommandAdapterLazy(config.SabotageCommandAddr)
 	physicalAdapter := grpcOut.NewPhysicalControlAdapterLazy(config.PhysicalControlAddr)
 	screenAdapter := grpcOut.NewScreenControlAdapterLazy(config.ScreenControlAddr)
+	intelligenceAdapter := grpcOut.NewIntelligenceAdapterLazy(config.IntelligenceAddr)
 	log.Printf("[MAIN] gRPC adapters initialized (lazy connection)")
 
 	// 3. Initialize Services
@@ -136,7 +138,8 @@ func main() {
 	log.Printf("[MAIN] ScoreService initialized")
 
 	// gRPC Server (Vision Service Input) on Port 50052
-	inputGrpcServer := grpcIn.NewInputGrpcServer("50052", reflexService, scoreService)
+	// gRPC Server (Vision Service Input) on Port 50052
+	inputGrpcServer := grpcIn.NewInputGrpcServer("50052", reflexService, scoreService, intelligenceAdapter)
 	if err := inputGrpcServer.Start(); err != nil {
 		log.Printf("[MAIN] Failed to start Input gRPC server: %v", err)
 	}
@@ -173,6 +176,7 @@ func loadConfig() Config {
 		PhysicalControlAddr: getEnv("PHYSICAL_CONTROL_ADDR", "localhost:50051"),
 		ScreenControlAddr:   getEnv("SCREEN_CONTROL_ADDR", "localhost:50052"),
 		SabotageCommandAddr: getEnv("SABOTAGE_CMD_ADDR", "localhost:50053"),
+		IntelligenceAddr:    getEnv("INTELLIGENCE_ADDR", "localhost:50051"),
 	}
 }
 

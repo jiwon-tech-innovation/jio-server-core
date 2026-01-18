@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"jiaa-server-core/internal/input/domain"
 	portin "jiaa-server-core/internal/input/port/in"
+	portout "jiaa-server-core/internal/input/port/out"
 	"jiaa-server-core/internal/input/service"
 	proto "jiaa-server-core/pkg/proto"
 )
@@ -15,15 +16,17 @@ import (
 // CoreServiceServer implements the CoreService gRPC server
 type CoreServiceServer struct {
 	proto.UnimplementedCoreServiceServer
-	reflexService portin.ReflexUseCase
-	scoreService  *service.ScoreService
+	reflexService       portin.ReflexUseCase
+	scoreService        *service.ScoreService
+	intelligenceService portout.IntelligencePort
 }
 
 // NewCoreServiceServer creates a new instance of CoreServiceServer
-func NewCoreServiceServer(reflexService portin.ReflexUseCase, scoreService *service.ScoreService) *CoreServiceServer {
+func NewCoreServiceServer(reflexService portin.ReflexUseCase, scoreService *service.ScoreService, intelligenceService portout.IntelligencePort) *CoreServiceServer {
 	return &CoreServiceServer{
-		reflexService: reflexService,
-		scoreService:  scoreService,
+		reflexService:       reflexService,
+		scoreService:        scoreService,
+		intelligenceService: intelligenceService,
 	}
 }
 
@@ -97,10 +100,23 @@ func (s *CoreServiceServer) ReportAnalysisResult(ctx context.Context, req *proto
 	return &proto.Ack{Success: true}, nil
 }
 
-// SendAppList handles app list updates from client
+// SendAppList handles app list updates from client (Forwards to AI)
 func (s *CoreServiceServer) SendAppList(ctx context.Context, req *proto.AppListRequest) (*proto.AppListResponse, error) {
-	log.Printf("[CoreService] Received App List (len=%d chars)", len(req.AppsJson))
-	return &proto.AppListResponse{Success: true, Message: "Apps received"}, nil
+	// log.Printf("[CoreService] Forwarding App List to AI (len=%d chars)", len(req.AppsJson))
+
+	msg, cmd, target, err := s.intelligenceService.SendAppList(req.AppsJson)
+	if err != nil {
+		log.Printf("[CoreService] Failed to forward to AI: %v", err)
+		// 에러 발생해도 클라가 크래시나지 않게 성공 처리하되 메시지 전달
+		return &proto.AppListResponse{Success: false, Message: fmt.Sprintf("AI Server Error: %v", err)}, nil
+	}
+
+	return &proto.AppListResponse{
+		Success:   true,
+		Message:   msg,
+		Command:   cmd,
+		TargetApp: target,
+	}, nil
 }
 
 // TranscribeAudio handles audio stream from client

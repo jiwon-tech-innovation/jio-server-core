@@ -10,4 +10,7 @@ type IntelligencePort interface {
 
 	// RequestURLClassification URL/Title을 분석하여 Study vs Play 판별
 	RequestURLClassification(clientID string, url string, title string) (string, error)
+
+	// SendAppList: 앱 목록을 전송하고 AI 판정/블랙리스트 결과를 반환
+	SendAppList(appsJSON string) (string, string, string, error) // ret: message, command, target_app, error
 }

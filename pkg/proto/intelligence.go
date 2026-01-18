@@ -73,6 +73,8 @@ type TranscribeResponse struct {
 type IntelligenceServiceClient interface {
 	AnalyzeLog(ctx context.Context, in *LogAnalysisRequest, opts ...grpc.CallOption) (*LogAnalysisResponse, error)
 	ClassifyURL(ctx context.Context, in *URLClassifyRequest, opts ...grpc.CallOption) (*URLClassifyResponse, error)
+	// SendAppList calls TrackingService on AI server
+	SendAppList(ctx context.Context, in *AppListRequest, opts ...grpc.CallOption) (*AppListResponse, error)
 	// TranscribeAudio는 스트리밍이므로 별도 구현 필요
 }
 
@@ -96,6 +98,16 @@ func (c *intelligenceServiceClient) AnalyzeLog(ctx context.Context, in *LogAnaly
 func (c *intelligenceServiceClient) ClassifyURL(ctx context.Context, in *URLClassifyRequest, opts ...grpc.CallOption) (*URLClassifyResponse, error) {
 	out := new(URLClassifyResponse)
 	err := c.cc.Invoke(ctx, "/jiaa.IntelligenceService/ClassifyURL", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *intelligenceServiceClient) SendAppList(ctx context.Context, in *AppListRequest, opts ...grpc.CallOption) (*AppListResponse, error) {
+	out := new(AppListResponse)
+	// Target the TrackingService exposed by jiaa-server-ai
+	err := c.cc.Invoke(ctx, "/jiaa.tracking.TrackingService/SendAppList", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
