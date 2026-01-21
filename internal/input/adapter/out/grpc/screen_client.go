@@ -98,3 +98,4 @@ func mapToVisualEffectType(action domain.ActionType) proto.VisualEffectType {
 	// Kept for reference or future use if proto creates VisualEffectType
 	return proto.VisualEffectType_SCREEN_SHAKE
 }
+
